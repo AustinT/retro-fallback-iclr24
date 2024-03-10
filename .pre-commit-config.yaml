@@ -1,0 +1,33 @@
+repos:
+  # Misc pre-commit checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0  # Use the ref you want to point at
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: check-executables-have-shebangs
+    -   id: check-json
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: destroyed-symlinks
+    -   id: detect-private-key
+    -   id: end-of-file-fixer
+    -   id: name-tests-test
+    -   id: trailing-whitespace
+  # Black: code style
+  - repo: https://github.com/psf/black
+    rev: 23.3.0 # Replace by any tag/version: https://github.com/psf/black/tags
+    hooks:
+      - id: black
+        language_version: python3 # Should be a command that runs python3.6+
+        args: ["--config=pyproject.toml"]
+  # Latest ruff (does linting + more)
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.291'
+    hooks:
+      - id: ruff
+        args: [--fix]
