@@ -1,29 +1,15 @@
-# Python Template
+# Retro-fallback (ICLR 2024)
 
-**Project description here**
+This is the official code to accompany the paper introducing retro-fallback.
 
-This is a template project so I don't need to keep setting up pre-commit.
+## TODO
+
+- installation instructions
+- running / reproducting results
+- development
+- paper link
+- add badges to README.
 
 ## Development
 
-### Installation
-
-**Installation instructions here**
-
-### Formatting
-
-Use pre-commit to enforce formatting, large file checks, etc.
-
-If not already installed in your environment, run:
-
-```bash
-conda install pre-commit
-```
-
-To install the precommit hooks:
-
-```bash
-pre-commit install
-```
-
-Now a series of useful checks will be run before any commit.
+Please install `pre-commit` and run tests with `pytest`.

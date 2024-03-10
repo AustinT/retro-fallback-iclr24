@@ -1,3 +1,25 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "retro-fallback-iclr24"
+version = "0.1.0"
+authors = [
+    {name = "Austin Tripp"},
+]
+description = "Official implentation of retro-fallback for ICLR 2024"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+dependencies = [
+    "syntheseus",
+    "syntheseus-retro-star-benchmark",
+]
+
+[project.urls]
+Repository = "https://github.com/AustinT/retro-fallback-iclr24"
+
 [tool.black]
 line-length = 120
 include = '\.pyi?$'
@@ -9,12 +31,12 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 120
 # Check https://beta.ruff.rs/docs/rules/ for full list of rules
-select = [
+lint.select = [
   "E", "W",  # pycodestyle
   "F",  # Pyflakes
   "I",  # isort
 ]
-ignore = [
+lint.ignore = [
   # W605: invalid escape sequence -- triggered by pseudo-LaTeX in comments
   "W605",
   # E501: Line too long -- triggered by comments and such. black deals with shortening.
