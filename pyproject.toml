@@ -20,6 +20,9 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/AustinT/retro-fallback-iclr24"
 
+[tool.setuptools.package-data]
+"retro_fallback_iclr24" = ["py.typed"]
+
 [tool.black]
 line-length = 120
 include = '\.pyi?$'
