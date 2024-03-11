@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndOrGraph
 
 
@@ -18,3 +20,10 @@ def leaf_distance_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
     old_leaf_distance = node.data.get("leaf_distance", None)
     node.data["leaf_distance"] = new_leaf_distance
     return new_leaf_distance != old_leaf_distance
+
+
+def reset_leaf_distance(node: ANDOR_NODE, graph: AndOrGraph) -> None:
+    """
+    Reset a node's `leaf_distance` to inf.
+    """
+    node.data["leaf_distance"] = math.inf
