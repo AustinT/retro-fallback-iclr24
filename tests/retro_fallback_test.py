@@ -178,7 +178,7 @@ class TestRetroFallback(BaseAlgorithmTest):
 
         # Check some priority values
         success_mask = np.isclose(output_graph.root_node.data["retro_fallback_s"], 1.0)
-        for smiles_str, expected_avg_success_tree in [
+        for smiles_str, expected_rho in [
             (
                 "COCO",
                 0.5 * 0.8,  # success of COCO is independent of existing routes
@@ -194,7 +194,7 @@ class TestRetroFallback(BaseAlgorithmTest):
             )
             assert math.isclose(
                 success_array.mean(),
-                expected_avg_success_tree,
+                expected_rho,
                 abs_tol=0.01,
             )
 
@@ -252,7 +252,7 @@ class TestRetroFallback(BaseAlgorithmTest):
 
         # Check some priority values
         success_mask = np.isclose(output_graph.root_node.data["retro_fallback_s"], 1.0)
-        for smiles_str, expected_avg_success_tree in [
+        for smiles_str, expected_rho in [
             (
                 "COCC",
                 0.5 * 0.1,  # NOTE: this number ignores contribution from below COCO
@@ -268,7 +268,7 @@ class TestRetroFallback(BaseAlgorithmTest):
             )
             assert math.isclose(
                 success_array.mean(),
-                expected_avg_success_tree,
+                expected_rho,
                 abs_tol=0.01,
             )
 
