@@ -23,7 +23,7 @@ from .calculate_s_psi_rho import (
     rho_update,
     s_update,
 )
-from .leaf_distance import leaf_distance_update
+from .leaf_distance import leaf_distance_update, reset_leaf_distance
 from .stochastic_processes import BinaryBuyability, BuyabilityModel, FeasibilityModel
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class RetroFallbackSearch(
         self,
         *args,
         feasibility_model: FeasibilityModel,
-        purchasability_model: Optional[BuyabilityModel] = None,
+        buyability_model: Optional[BuyabilityModel] = None,
         early_stopping_SSP: float = 1.0,
         stepwise_log_level: int = logging.DEBUG - 1,
         **kwargs,
@@ -53,7 +53,7 @@ class RetroFallbackSearch(
 
         # Set all attributes
         self.feasibility_model = feasibility_model  # \xi_f
-        self.buyability_model = purchasability_model or BinaryBuyability(  # \xi_b
+        self.buyability_model = buyability_model or BinaryBuyability(  # \xi_b
             num_samples=self.feasibility_model.num_samples
         )
         assert (
@@ -74,7 +74,7 @@ class RetroFallbackSearch(
     def reset(self) -> None:
         super().reset()
         self.feasibility_model.reset()
-        self.purchasability_model.reset()
+        self.buyability_model.reset()
 
     def should_stop_search(self, graph) -> bool:
         """In addition to checks from superclass, also check for SSP reaching a pre-defined threshold."""
@@ -243,7 +243,7 @@ class RetroFallbackSearch(
         # If there are any molecules without samples, sample them
         if len(mols_without_samples) > 0:
             mol_to_samples.update(
-                self.purchasability_model.posterior_sample(inputs=mols_without_samples, observed_samples=mol_to_samples)
+                self.buyability_model.posterior_sample(inputs=mols_without_samples, observed_samples=mol_to_samples)
             )
 
         # Update nodes without samples
@@ -274,23 +274,7 @@ class RetroFallbackSearch(
         updated_nodes = super().set_node_values(nodes, graph)
         del nodes  # unused
 
-        # Next, calculate leaf distances (will be used to update s, psi in a good order)
-        for n in updated_nodes:
-            n.data.setdefault("leaf_distance", math.inf)
-        leaf_node_update_results = message_passing_with_resets(
-            nodes=updated_nodes,
-            graph=graph,
-            update_fn=leaf_distance_update,
-            update_predecessors=True,
-            update_successors=False,
-        )
-        logger.log(
-            self.stepwise_log_level,
-            f"Updated leaf distances: {len(leaf_node_update_results.nodes_updated)} / {len(graph)} nodes",
-        )
-        updated_nodes.update(leaf_node_update_results.nodes_updated)
-
-        # Fill in feasibilities, purchasabilities, and success estimates
+        # Fill in feasibilities, buyabilities, and success estimates
         self._set_feasibilities_and_buyabilities(graph)
         self._initialize_heuristic(  # only for unexpanded leaf nodes
             or_nodes=[
@@ -345,7 +329,8 @@ class RetroFallbackSearch(
             # (type ignore is because "callable or None" type is not clear to mypy)
             s_tracker = psi_tracker = rho_tracker = None  # type: ignore[assignment]
 
-        # Step 0) initialize all values to 0 for uninitialized nodes
+        # Step 0) initialize all values to 0 for uninitialized nodes.
+        # Initialize leaf distances to infinity
         for node in nodes_to_update:
             for key in [
                 "retro_fallback_s",
@@ -354,8 +339,26 @@ class RetroFallbackSearch(
             ]:
                 if key not in node.data:
                     node.data[key] = np.zeros(self.feasibility_model.num_samples)
+            node.data.setdefault("leaf_distance", math.inf)
 
-        # Step 1) update "retro_fallback_s". Since it is non-decreasing we don't bother provided a reset function.
+        # Step 1) update "leaf_distance" (will be used to update s, psi in a good order)
+        # Add optional reset to infinity (in case a cycle is formed)
+        num_iter_to_reset_everything = 10 * len(graph)  # a large number which depends on the graph size
+        leaf_distance_update_results = message_passing_with_resets(
+            nodes=nodes_to_update,
+            graph=graph,
+            update_fn=leaf_distance_update,
+            update_predecessors=True,
+            update_successors=False,
+            reset_function=reset_leaf_distance,
+            num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
+            reset_visit_threshold=self.reset_visit_threshold,
+            num_iter_to_reset_everything=num_iter_to_reset_everything,
+        )
+        _log_update_result("leaf distance", leaf_distance_update_results, None)
+        nodes_to_update.update(leaf_distance_update_results.nodes_updated)
+
+        # Step 2) update "retro_fallback_s". Since it is non-decreasing we don't bother provided a reset function.
         s_update_result = message_passing_with_resets(
             nodes=nodes_to_update,
             graph=graph,
@@ -369,9 +372,8 @@ class RetroFallbackSearch(
         _log_update_result("s", s_update_result, s_tracker)
         nodes_to_update.update(s_update_result.nodes_updated)
 
-        # Step 2) update "retro_fallback_psi". This may require resetting so a reset function is provided.
+        # Step 3) update "retro_fallback_psi". This may require resetting so a reset function is provided.
         # Updates are done by leaf-node distance since it is "bottom-up".
-        num_iter_to_reset_everything = 10 * len(graph)  # a large number which depends on the graph size
         psi_update_result = message_passing_with_resets(
             nodes=nodes_to_update,
             graph=graph,
@@ -382,13 +384,13 @@ class RetroFallbackSearch(
             node_value_tracker=psi_tracker,
             num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
             reset_visit_threshold=self.reset_visit_threshold,
-            priority_fn=lambda node: node.data["leaf_node_distance"],
+            priority_fn=lambda node: node.data["leaf_distance"],
             num_iter_to_reset_everything=num_iter_to_reset_everything,
         )
         _log_update_result("Psi", psi_update_result, psi_tracker)
         nodes_to_update.update(psi_update_result.nodes_updated)
 
-        # Step 3) update "retro_fallback_rho". This may require resetting so a reset function is provided.
+        # Step 4) update "retro_fallback_rho". This may require resetting so a reset function is provided.
         # Updates are done by depth since it is "top-down".
         rho_update_result = message_passing_with_resets(
             nodes=nodes_to_update,
