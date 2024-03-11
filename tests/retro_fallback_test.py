@@ -106,7 +106,7 @@ class TestRetroFallback(BaseAlgorithmTest):
         assert get_first_solution_time(output_graph) == math.inf
         assert np.allclose(output_graph.root_node.data["retro_fallback_s"], 0.0)
 
-        # Check some priority values
+        # Check some rho values
         for smiles_str, expected_rho in [
             (
                 "CO",
@@ -136,6 +136,14 @@ class TestRetroFallback(BaseAlgorithmTest):
             ),
             0.0,
         )
+
+        # Check some leaf distances
+        for smiles_str, expected_d in [
+            ("COCS", 2),
+            ("C", 0),
+            ("COCO", 0),
+        ]:
+            assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
 
     def test_by_hand_step2(
         self,
@@ -176,7 +184,7 @@ class TestRetroFallback(BaseAlgorithmTest):
             abs_tol=0.01,
         )
 
-        # Check some priority values
+        # Check some rho values
         success_mask = np.isclose(output_graph.root_node.data["retro_fallback_s"], 1.0)
         for smiles_str, expected_rho in [
             (
@@ -206,6 +214,16 @@ class TestRetroFallback(BaseAlgorithmTest):
             expected_synthesis_probability,
             abs_tol=0.01,
         )
+
+        # Check some leaf distances
+        for smiles_str, expected_d in [
+            ("COCS", 2),
+            ("C", 0),
+            ("S", 0),
+            ("COCO", 0),
+            ("CS", 2),
+        ]:
+            assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
 
     def test_by_hand_step3(
         self,
@@ -250,7 +268,7 @@ class TestRetroFallback(BaseAlgorithmTest):
             abs_tol=0.01,
         )
 
-        # Check some priority values
+        # Check some rho values
         success_mask = np.isclose(output_graph.root_node.data["retro_fallback_s"], 1.0)
         for smiles_str, expected_rho in [
             (
@@ -280,3 +298,13 @@ class TestRetroFallback(BaseAlgorithmTest):
             expected_synthesis_probability,
             abs_tol=0.01,
         )
+
+        # Check some leaf distances
+        for smiles_str, expected_d in [
+            ("COCS", 2),
+            ("C", 0),
+            ("S", 0),
+            ("COCO", 2),
+            ("CS", 2),
+        ]:
+            assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
