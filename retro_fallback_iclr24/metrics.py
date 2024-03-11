@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
-from typing import Optional
+from typing import Collection, Iterator, Optional
 
 import numpy as np
-from syntheseus.search.graph.and_or import AndNode, AndOrGraph, OrNode
+from syntheseus.search.analysis.route_extraction import _iter_top_routes
+from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.message_passing import run_message_passing
 
 from retro_fallback_iclr24.calculate_s_psi_rho import s_update
@@ -145,3 +147,58 @@ def estimate_successful_synthesis_probability(
         buyability_model=buyability_model,
         max_times=[max_time],
     )[0]
+
+
+def _feasibility_partial_cost(nodes, graph) -> float:
+    """Lower bound is -log(success probability of all reactions)."""
+    rxn_samples = np.array([node.data["retro_fallback_f_or_b"] for node in nodes if isinstance(node, AndNode)])
+    rxns_all_succeed = np.all(rxn_samples, axis=0)
+    # NOTE: in the future could probably also bound using success outcomes of children?
+    succ_prob = float(np.mean(rxns_all_succeed))
+    if succ_prob == 0:
+        return math.inf
+    else:
+        return -math.log(succ_prob)
+
+
+def _feasibility_cost(nodes, graph) -> float:
+    """Cost is -log(success probability of all reactions and molecules without children)."""
+    all_samples = []
+    for node in nodes:
+        has_children_in_route = len(set(graph.successors(node)) & set(nodes)) > 0
+        if isinstance(node, AndNode) or not has_children_in_route:
+            all_samples.append(node.data["retro_fallback_f_or_b"])
+    all_succeed = np.all(np.array(all_samples), axis=0)
+    succ_prob = float(np.mean(all_succeed))
+    if succ_prob == 0:
+        return math.inf
+    else:
+        return -math.log(succ_prob)
+
+
+def iter_routes_feasibility_order(
+    graph: AndOrGraph,
+    max_routes: int,
+) -> Iterator[tuple[float, Collection[ANDOR_NODE]]]:
+    """
+    Iterate over routes in order of increasing feasibility.
+
+    Creates an intermediate variable "retro_fallback_f_or_b"
+    which holds both feasibility and buyability samples.
+
+    Output tuples are -log(route success probability) and the nodes in the route.
+    """
+
+    # First, set "route_feas_samples"
+    for node in graph.nodes():
+        if isinstance(node, AndNode):
+            node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_f"].copy()
+        else:
+            node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_b"].copy()
+
+    yield from _iter_top_routes(
+        graph=graph,
+        max_routes=max_routes,
+        cost_fn=_feasibility_cost,
+        cost_lower_bound=_feasibility_partial_cost,
+    )

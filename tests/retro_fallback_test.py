@@ -14,7 +14,7 @@ from syntheseus.tests.search.algorithms.test_best_first import DictMolCost
 from syntheseus.tests.search.conftest import *  # noqa: F403
 from syntheseus.tests.search.conftest import RetrosynthesisTask
 
-from retro_fallback_iclr24.metrics import estimate_successful_synthesis_probability
+from retro_fallback_iclr24.metrics import estimate_successful_synthesis_probability, iter_routes_feasibility_order
 from retro_fallback_iclr24.retro_fallback import RetroFallbackSearch
 from retro_fallback_iclr24.stochastic_processes.buyability import BinaryBuyability
 from retro_fallback_iclr24.stochastic_processes.feasibility import ConstantIndependentFeasibility
@@ -51,6 +51,12 @@ BY_HAND_STEP1_RXNS = [
 
 
 class TestRetroFallback(BaseAlgorithmTest):
+    """
+    Test that retro-fallback behaves as expected.
+
+    Tests are also re-purposed to also test some analysis functions.
+    """
+
     time_limit_multiplier = 10.0  # generally slower than most algorithms
     time_limit_upper_bound_s = 0.1  # steps are much slower
 
@@ -145,6 +151,10 @@ class TestRetroFallback(BaseAlgorithmTest):
         ]:
             assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
 
+        # Should not be any feasible routes
+        with pytest.raises(StopIteration):
+            next(iter_routes_feasibility_order(output_graph, max_routes=1))
+
     def test_by_hand_step2(
         self,
         retrosynthesis_task2: RetrosynthesisTask,  # noqa: F405
@@ -224,6 +234,11 @@ class TestRetroFallback(BaseAlgorithmTest):
             ("CS", 2),
         ]:
             assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
+
+        # Most feasible route
+        best_route_feasibility, _ = next(iter_routes_feasibility_order(output_graph, max_routes=1))
+        best_route_feasibility = math.exp(-best_route_feasibility)
+        assert math.isclose(best_route_feasibility, 0.25, abs_tol=0.01)
 
     def test_by_hand_step3(
         self,
@@ -308,3 +323,8 @@ class TestRetroFallback(BaseAlgorithmTest):
             ("CS", 2),
         ]:
             assert output_graph._mol_to_node[Molecule(smiles_str)].data["leaf_distance"] == expected_d
+
+        # Most feasible route
+        best_route_feasibility, _ = next(iter_routes_feasibility_order(output_graph, max_routes=1))
+        best_route_feasibility = math.exp(-best_route_feasibility)
+        assert math.isclose(best_route_feasibility, 0.25, abs_tol=0.01)
