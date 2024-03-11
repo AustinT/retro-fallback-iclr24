@@ -21,6 +21,7 @@ Instructions for each dataset are in `README.md` files in the following director
 
 - `retro_fallback_iclr24/iclr24_experiments/eMolecules`
 - `retro_fallback_iclr24/iclr24_experiments/fusion_retro`
+- `retro_fallback_iclr24/iclr24_experiments/guacamol` (NOTE: recreating dataset from scratch requires `eMolecules` inventory)
 
 ## Development
 
