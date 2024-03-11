@@ -12,7 +12,7 @@ import math
 from collections import defaultdict
 from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import numpy as np
 from syntheseus.search.algorithms.best_first.base import PriorityQueue
@@ -159,37 +159,6 @@ def rho_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
     return value_changed
 
 
-def leaf_node_distance_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
-    """
-    Updates "leaf_node_distance": the distance from this node to the nearest leaf node.
-
-    For leaf nodes, this distance is 0.
-
-    For non-leaf OR nodes, it is 1 + min(distance of children).
-
-    For non-leaf AND nodes, it is 1 + max(distance of children).
-    """
-
-    # Get children distances
-    child_distances = [child.data["leaf_node_distance"] for child in graph.successors(node)]
-
-    # Calculate new distance
-    if len(child_distances) == 0:
-        new_value = 0
-    elif isinstance(node, OrNode):
-        new_value = 1 + min(child_distances)
-    elif isinstance(node, AndNode):
-        new_value = 1 + max(child_distances)
-    else:
-        raise TypeError("Only AND/OR nodes supported.")
-
-    # Step 2: set the new value and return
-    old_value: Optional[int] = node.data.get("leaf_node_distance", None)
-    node.data["leaf_node_distance"] = new_value
-    value_changed = old_value is None or old_value != new_value
-    return value_changed
-
-
 @dataclass
 class MessagePassingResult:
     nodes_updated: set[ANDOR_NODE]
@@ -231,7 +200,7 @@ def message_passing_with_resets(
 
     assert num_visits_to_trigger_reset >= reset_visit_threshold, "Inconsistent reset thresholds"
     priority_fn = priority_fn or _default_priority_fn
-    num_iter_to_reset_everything: int = num_iter_to_reset_everything or math.inf  # type: ignore
+    num_iter_to_reset_everything = num_iter_to_reset_everything or cast(int, math.inf)
 
     # Initialize queue of nodes to be updated
     update_queue = PriorityQueue()
@@ -323,3 +292,11 @@ def message_passing_with_resets(
                     del n
 
     return MessagePassingResult(set(node_to_num_update_without_reset.keys()), n_iter, n_reset, node_starting_values)
+
+
+def reset_psi(node: ANDOR_NODE, graph: AndOrGraph) -> None:
+    node.data["retro_fallback_psi"] = np.zeros_like(node.data["retro_fallback_psi"])
+
+
+def reset_rho(node: ANDOR_NODE, graph: AndOrGraph) -> None:
+    node.data["retro_fallback_rho"] = np.zeros_like(node.data["retro_fallback_rho"])
