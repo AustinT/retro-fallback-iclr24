@@ -4,7 +4,6 @@ import abc
 from typing import Generic, TypeVar
 
 import numpy as np
-from syntheseus import Molecule, SingleProductReaction
 
 T = TypeVar("T")
 
@@ -65,23 +64,3 @@ class IndependentStochasticProcess(StochasticProcess[T]):
             else:
                 output[inp] = samples_for_unobserved[inp]
         return output
-
-
-class FeasibilityModel(StochasticProcess[SingleProductReaction]):
-    """Base class for feasibility models."""
-
-    pass
-
-
-class IndependentFeasibilityModel(IndependentStochasticProcess[SingleProductReaction], FeasibilityModel):
-    pass
-
-
-class PurchasabilityModel(StochasticProcess[Molecule]):
-    """Base class for purchasability models."""
-
-    pass
-
-
-class IndependentPurchasabilityModel(IndependentStochasticProcess[Molecule], PurchasabilityModel):
-    pass
