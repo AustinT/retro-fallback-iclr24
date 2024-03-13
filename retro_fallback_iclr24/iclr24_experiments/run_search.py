@@ -172,8 +172,8 @@ def run_search_and_analyze_results():
 
     # Load ground truth start molecules
     smiles_to_start_mols = dict()
-    if args.ground_truth_start_mols_file is not None:
-        with open(args.ground_truth_start_mols_file, "r") as f:
+    if args.precursor_matching_file is not None:
+        with open(args.precursor_matching_file, "r") as f:
             smiles_to_start_mols.update(json.load(f))
         logger.info(f"Loaded {len(smiles_to_start_mols)} ground truth start molecules.")
 
