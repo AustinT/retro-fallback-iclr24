@@ -333,6 +333,7 @@ def run_search_and_analyze_results():
         # Store search results
         search_results = dict(
             smiles=smiles,
+            args=args.__dict__,
             final_num_nodes=len(output_graph),
             total_search_time=t1 - t0,
             total_analysis_time=t2 - t1,
