@@ -174,7 +174,7 @@ def run_search_and_analyze_results():
         logger.info(f"Loaded {len(smiles_to_start_mols)} ground truth start molecules.")
 
     # Make reaction model, and feasibility model
-    rxn_model = RetroStarReactionModel(use_cache=True)
+    rxn_model = RetroStarReactionModel(use_cache=True, default_num_results=50)
     _use_cache_covar = True  # common arg to all latent GP models
     if args.marginal_feasibility == "constant":
         _kwargs = dict(constant=0.5, num_samples=args.num_samples)
