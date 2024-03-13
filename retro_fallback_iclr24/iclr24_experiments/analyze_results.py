@@ -7,13 +7,13 @@ import time
 from typing import Any, Optional
 
 import numpy as np
+from syntheseus import Molecule
 from syntheseus.search.algorithms.best_first.retro_star import (
     reaction_number_update,
 )
 from syntheseus.search.algorithms.mcts.molset import MolSetGraph
 from syntheseus.search.analysis.route_extraction import iter_routes_time_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
-from syntheseus.search.chem import Molecule
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.message_passing import run_message_passing
 
