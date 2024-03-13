@@ -125,7 +125,7 @@ def get_parser():
         help="Run algorithm on a tree instead of a graph.",
     )
     parser.add_argument(
-        "--ground_truth_start_mols_file",
+        "--precursor_matching_file",
         type=str,
         default=None,
         help="Optional JSON file containing ground truth start molecules. Used for start mol matching metric.",
@@ -155,6 +155,10 @@ def run_search_and_analyze_results():
     # Get arguments
     args = get_parser().parse_args()
     logger.info(args)
+
+    # Ensure output dir exists
+    output_dir_path = Path(args.output_dir)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Load SMILES to test
     with open(args.smiles_file, "r") as f:
@@ -340,7 +344,7 @@ def run_search_and_analyze_results():
             analysis_times=analysis_times,
             **analysis_results,
         )
-        with open(Path(args.output_dir) / f"result_{i + 1 + smiles_idx_offset:06d}.json", "wt") as f:
+        with open(output_dir_path / f"result_{i + 1 + smiles_idx_offset:06d}.json", "wt") as f:
             json.dump(search_results, f, indent=2)
 
         logger.info(f"Done search + analysis in {t2 - t0:.2f} s. Results:\n{pformat(search_results)}")
