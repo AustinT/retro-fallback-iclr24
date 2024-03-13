@@ -231,7 +231,7 @@ def run_search_and_analyze_results():
             feasibility_model=feasibility_model,
             buyability_model=buyability_model,
             value_function=value_function,
-            early_stopping_success_threshold=args.rfb_early_termination_prob,
+            early_stopping_SSP=args.rfb_early_termination_prob,
             **common_alg_kwargs,
             **retro_star_like_common_alg_kwargs,
         )
@@ -343,7 +343,7 @@ def run_search_and_analyze_results():
         with open(Path(args.output_dir) / f"result_{i + 1 + smiles_idx_offset:06d}.json", "wt") as f:
             json.dump(search_results, f, indent=2)
 
-        logger.info(f"Done search + analysis in {t2 - t0:.2f} s. Results:\n{pformat(search_results[smiles])}")
+        logger.info(f"Done search + analysis in {t2 - t0:.2f} s. Results:\n{pformat(search_results)}")
 
         # Free up memory for the next search
         del output_graph

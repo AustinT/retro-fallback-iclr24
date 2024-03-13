@@ -242,16 +242,16 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
 
     def posterior_sample(
         self,
-        reactions: set[SingleProductReaction],
+        inputs: set[SingleProductReaction],
         observed_samples: dict[SingleProductReaction, np.ndarray],
     ) -> dict[SingleProductReaction, np.ndarray]:
         gp_feas_logger.debug(
-            f"Drawing posterior sample for {len(reactions)} reactions conditioned on {len(observed_samples)} observed samples."
+            f"Drawing posterior sample for {len(inputs)} reactions conditioned on {len(observed_samples)} observed samples."
         )
         t_start = time.monotonic()
         # Transform reactions into list (we need to assign an arbitrary order to them)
-        rxn_list = list(reactions)
-        del reactions
+        rxn_list = list(inputs)
+        del inputs
 
         # Potentially exit early if no reactions to sample
         if len(rxn_list) == 0:
