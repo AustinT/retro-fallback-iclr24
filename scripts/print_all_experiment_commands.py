@@ -91,6 +91,7 @@ algorithms = [
 PREFIX_ENV_VARS = (
     'CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 '
     "MKL_NUM_THREADS=2 VECLIB_MAXIMUM_THREADS=2 NUMEXPR_NUM_THREADS=2 "
+    "PYTHONPATH=.:$PYTHONPATH "
 )
 
 if __name__ == "__main__":
@@ -123,6 +124,7 @@ if __name__ == "__main__":
                             curr_output_dir = (
                                 Path(args.output_dir) / dataset.name / feas_model / alg.name / heur / f"trial_{trial+1}"
                             )
+                            curr_output_dir.mkdir(parents=True, exist_ok=True)
 
                             # Standard command for all algortthms
                             command = (
@@ -151,6 +153,10 @@ if __name__ == "__main__":
                             # Optionally add start mol matching file
                             if dataset.precursor_matching_file:
                                 command += f"--precursor_matching_file={dataset.precursor_matching_file} "
+
+                            # Append a re-direct of stdout and std err to log file
+                            log_file_path = curr_output_dir / f"results_{batch_start:05d}-{batch_end:05d}.log"
+                            command += f"> {str(log_file_path)} 2>&1"
 
                             # print the command
                             print(command)
