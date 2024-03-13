@@ -185,16 +185,18 @@ def iter_routes_feasibility_order(
 
     Creates an intermediate variable "retro_fallback_f_or_b"
     which holds both feasibility and buyability samples.
+    If this variable is already present, it does not overwrite it.
 
     Output tuples are -log(route success probability) and the nodes in the route.
     """
 
     # First, set "route_feas_samples"
     for node in graph.nodes():
-        if isinstance(node, AndNode):
-            node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_f"].copy()
-        else:
-            node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_b"].copy()
+        if "retro_fallback_f_or_b" not in node.data:
+            if isinstance(node, AndNode):
+                node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_f"].copy()
+            else:
+                node.data["retro_fallback_f_or_b"] = node.data["retro_fallback_b"].copy()
 
     yield from _iter_top_routes(
         graph=graph,
