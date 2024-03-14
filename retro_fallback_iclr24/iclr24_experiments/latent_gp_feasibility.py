@@ -156,7 +156,7 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
                 reactants2=fp_r_query,
                 product2=fp_p_query,
             )
-            gp_feas_logger.debug(f"Cond-query covar calculated in {time.monotonic() - t} s")
+            gp_feas_logger.log(logging.DEBUG - 1, f"Cond-query covar calculated in {time.monotonic() - t} s")
 
             # Get cholesky factor of covariance matrix between condition samples.
             # This is either via explicit calculation or via cache.
@@ -165,7 +165,7 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
             if self.use_cached_covar_matrix and cache_applicable:
                 cov_cond_cond = self._covar_rxns_cached  # type: ignore[has-type]
                 L_cond_cond_cho = self._cho_covar_rxns_cached  # type: ignore[has-type]
-                gp_feas_logger.debug("Using cached covariance matrix & cho factor.")
+                gp_feas_logger.log(logging.DEBUG - 1, "Using cached covariance matrix & cho factor.")
             else:
                 # Calculate covariance matrix between condition samples
                 t = time.monotonic()
@@ -175,21 +175,23 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
                     reactants2=fp_r_cond,
                     product2=fp_p_cond,
                 )
-                gp_feas_logger.debug(f"Cond-cond covariance calculated in {time.monotonic() - t} s")
+                gp_feas_logger.log(logging.DEBUG - 1, f"Cond-cond covariance calculated in {time.monotonic() - t} s")
 
                 # Calculate cholesky factor of covariance matrix between condition samples
                 t = time.monotonic()
                 cov_cond_cond_plus_noise = cov_cond_cond + self.noise_var * np.eye(len(cov_cond_cond))
                 L_cond_cond_cho = cholesky(cov_cond_cond_plus_noise, lower=CHO_LOWER)
-                gp_feas_logger.debug(f"Cholesky factor calculated in {time.monotonic() - t} s")
+                gp_feas_logger.log(logging.DEBUG - 1, f"Cholesky factor calculated in {time.monotonic() - t} s")
 
                 if cache_applicable:
                     # do a check to make sure the cache is correct
                     assert np.allclose(cov_cond_cond, self._covar_rxns_cached)  # type: ignore[has-type]
                     assert np.allclose(L_cond_cond_cho, self._cho_covar_rxns_cached)  # type: ignore[has-type]
-                    gp_feas_logger.debug("Cached covariance matrix & cholesky factor matched calculated one.")
+                    gp_feas_logger.log(
+                        logging.DEBUG - 1, "Cached covariance matrix & cholesky factor matched calculated one."
+                    )
                 else:
-                    gp_feas_logger.debug("Cached covariance matrix not applicable.")
+                    gp_feas_logger.log(logging.DEBUG - 1, "Cached covariance matrix not applicable.")
 
             # Conditional mean
             t = time.monotonic()
@@ -201,7 +203,7 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
             cov_query_output = cov_query_output - cov_cond_query.T @ cho_solve(
                 (L_cond_cond_cho, CHO_LOWER), cov_cond_query
             )
-            gp_feas_logger.debug(f"Conditional mean and covar calculated in {time.monotonic() - t} s")
+            gp_feas_logger.log(logging.DEBUG - 1, f"Conditional mean and covar calculated in {time.monotonic() - t} s")
 
             # For next iteration, prepare a cached version of full covariance matrix (i.e. query and condition points)
             # and its cholesky factor.
@@ -229,7 +231,7 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
             self._cho_covar_rxns_cached[: len(observed_rxn_list), : len(observed_rxn_list)] = L_cond_cond_cho
             self._cho_covar_rxns_cached[len(observed_rxn_list) :, : len(observed_rxn_list)] = new_cho_off_diag_block.T
             self._cho_covar_rxns_cached[len(observed_rxn_list) :, len(observed_rxn_list) :] = new_cho_diag_block
-            gp_feas_logger.debug(f"Cholesky cache calculated in {time.monotonic() - t} s")
+            gp_feas_logger.log(logging.DEBUG - 1, f"Cholesky cache calculated in {time.monotonic() - t} s")
 
         return mu_query_output, cov_query_output
 
@@ -264,12 +266,14 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
         # Step 2: get fingerprints for new reactions
         t = time.monotonic()
         self._add_fingerprint_metadata_to_reactions(rxn_list)
-        gp_feas_logger.debug(f"Added fingerprint metadata in {time.monotonic() - t} s")
+        gp_feas_logger.log(logging.DEBUG - 1, f"Added fingerprint metadata in {time.monotonic() - t} s")
 
         # Step 3: get latent variable distribution
         t = time.monotonic()
         mu_query, cov_query = self._get_latent_distribution(rxn_list, set(observed_samples.keys()))
-        gp_feas_logger.debug(f"Posterior latent variable distribution calculated in {time.monotonic() - t} s")
+        gp_feas_logger.log(
+            logging.DEBUG - 1, f"Posterior latent variable distribution calculated in {time.monotonic() - t} s"
+        )
 
         # Step 4: sample from conditional distribution
         # (sample just the noise, whose distribution does not depend on observed samples, then add to conditional mean)
@@ -281,7 +285,7 @@ class _Latent_GP_FeasibilityModel(FeasibilityModel):
         assert z_query.shape == (self.num_samples, len(rxn_list))
         for i, rxn in enumerate(rxn_list):
             rxn.metadata[LATENT_GP_SAMPLES] = z_query[:, i]
-        gp_feas_logger.debug(f"Latent variable samples drawn in {time.monotonic() - t} s")
+        gp_feas_logger.log(logging.DEBUG - 1, f"Latent variable samples drawn in {time.monotonic() - t} s")
 
         # Step 5: transform samples into binary outcomes and return
         output = {rxn: (rxn.metadata[LATENT_GP_SAMPLES] > 0).astype(float) for rxn in rxn_list}
