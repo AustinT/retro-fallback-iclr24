@@ -36,7 +36,7 @@ SMILES_FILE_PREFIX = "./retro_fallback_iclr24/iclr24_experiments"
 datasets = [
     DatasetExperimentParams(
         name="retrostar190",
-        smiles_file=f"{SMILES_FILE_PREFIX}/guacamol/retrostar190.smiles",
+        smiles_file=f"{SMILES_FILE_PREFIX}/retrostar190/retrostar190.smiles",
         num_replications=5,
         search_length=501,
         feasibility_models=ALL_FEASIBILITY_MODELS,
