@@ -182,7 +182,7 @@ def message_passing_with_resets(
     update_successors: bool = True,
     reset_function: Optional[Callable[[ANDOR_NODE, AndOrGraph], None]] = None,
     node_value_tracker: Optional[Callable[[ANDOR_NODE], Any]] = None,
-    priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,
+    update_priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,
     queue_entry_priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,  # TODO: rename this?
     num_visits_to_trigger_reset: int = 10_000,
     reset_visit_threshold: int = 1000,
@@ -206,7 +206,7 @@ def message_passing_with_resets(
         return 0  # arbitrary constant
 
     assert num_visits_to_trigger_reset >= reset_visit_threshold, "Inconsistent reset thresholds"
-    priority_fn = priority_fn or _default_priority_fn
+    update_priority_fn = update_priority_fn or _default_priority_fn
     queue_entry_priority_fn = queue_entry_priority_fn or _default_priority_fn
     num_iter_to_reset_everything = num_iter_to_reset_everything or cast(int, math.inf)
 
@@ -215,7 +215,7 @@ def message_passing_with_resets(
     node_to_num_update_without_reset: defaultdict[ANDOR_NODE, int] = defaultdict(int)
     node_starting_values: dict[ANDOR_NODE, Any] = {}
     for n in sorted(nodes, key=queue_entry_priority_fn):
-        add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
+        add_to_priority_queue_if_priority_changed(update_queue, n, update_priority_fn(n))
         del n
 
     def get_neighbours_to_add(node):
@@ -242,7 +242,7 @@ def message_passing_with_resets(
         if update_fn(node, graph):
             node_to_num_update_without_reset[node] += 1
             for n in sorted(get_neighbours_to_add(node), key=queue_entry_priority_fn):
-                add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
+                add_to_priority_queue_if_priority_changed(update_queue, n, update_priority_fn(n))
                 del n
 
         # If a reset function is provided, potentially reset nodes
@@ -297,7 +297,7 @@ def message_passing_with_resets(
 
                 # Add nodes to the queue (done at the end to avoid adding the same node multiple times)
                 for n in sorted(nodes_to_add_to_queue, key=queue_entry_priority_fn):
-                    add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
+                    add_to_priority_queue_if_priority_changed(update_queue, n, update_priority_fn(n))
                     del n
 
     return MessagePassingResult(set(node_to_num_update_without_reset.keys()), n_iter, n_reset, node_starting_values)

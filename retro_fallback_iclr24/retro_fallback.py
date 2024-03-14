@@ -383,7 +383,8 @@ class RetroFallbackSearch(
             update_successors=False,
             reset_function=None,  # shouldn't be required
             node_value_tracker=s_tracker,
-            priority_fn=None,
+            update_priority_fn=None,
+            queue_entry_priority_fn=lambda node: node.data["leaf_distance"],
         )
         _log_update_result("s", s_update_result, s_tracker)
         nodes_to_update.update(s_update_result.nodes_updated)
@@ -400,7 +401,8 @@ class RetroFallbackSearch(
             node_value_tracker=psi_tracker,
             num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
             reset_visit_threshold=self.reset_visit_threshold,
-            priority_fn=lambda node: node.data["leaf_distance"],
+            update_priority_fn=None,
+            queue_entry_priority_fn=lambda node: node.data["leaf_distance"],
             num_iter_to_reset_everything=num_iter_to_reset_everything,
         )
         _log_update_result("Psi", psi_update_result, psi_tracker)
@@ -418,7 +420,8 @@ class RetroFallbackSearch(
             node_value_tracker=rho_tracker,
             num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
             reset_visit_threshold=self.reset_visit_threshold,
-            priority_fn=lambda node: node.data["root_distance"],
+            update_priority_fn=None,
+            queue_entry_priority_fn=lambda node: node.data["root_distance"],
             num_iter_to_reset_everything=num_iter_to_reset_everything,
         )
         _log_update_result("Rho", rho_update_result, rho_tracker)
