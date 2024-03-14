@@ -167,6 +167,12 @@ class MessagePassingResult:
     node_starting_values: dict[ANDOR_NODE, Any]
 
 
+def add_to_priority_queue_if_priority_changed(queue: PriorityQueue, item: Any, priority: Any):
+    if item in queue and queue.get_priority(item) == priority:
+        return  # no need to re-add it (which would also remove it)
+    queue.push_item(item, priority)
+
+
 def message_passing_with_resets(
     *,
     nodes: Collection[ANDOR_NODE],
@@ -207,7 +213,7 @@ def message_passing_with_resets(
     node_to_num_update_without_reset: defaultdict[ANDOR_NODE, int] = defaultdict(int)
     node_starting_values: dict[ANDOR_NODE, Any] = {}
     for n in nodes:
-        update_queue.push_item(n, priority_fn(n))
+        add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
         del n
 
     def get_neighbours_to_add(node):
@@ -234,7 +240,7 @@ def message_passing_with_resets(
         if update_fn(node, graph):
             node_to_num_update_without_reset[node] += 1
             for n in get_neighbours_to_add(node):
-                update_queue.push_item(n, priority_fn(n))
+                add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
                 del n
 
         # If a reset function is provided, potentially reset nodes
@@ -288,7 +294,7 @@ def message_passing_with_resets(
 
                 # Add nodes to the queue (done at the end to avoid adding the same node multiple times)
                 for n in nodes_to_add_to_queue:
-                    update_queue.push_item(n, priority_fn(n))
+                    add_to_priority_queue_if_priority_changed(update_queue, n, priority_fn(n))
                     del n
 
     return MessagePassingResult(set(node_to_num_update_without_reset.keys()), n_iter, n_reset, node_starting_values)
