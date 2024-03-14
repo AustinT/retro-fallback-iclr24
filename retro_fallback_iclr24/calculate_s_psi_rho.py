@@ -183,7 +183,7 @@ def message_passing_with_resets(
     reset_function: Optional[Callable[[ANDOR_NODE, AndOrGraph], None]] = None,
     node_value_tracker: Optional[Callable[[ANDOR_NODE], Any]] = None,
     update_priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,
-    queue_entry_priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,  # TODO: rename this?
+    queue_entry_priority_fn: Optional[Callable[[ANDOR_NODE], float]] = None,
     num_visits_to_trigger_reset: int = 10_000,
     reset_visit_threshold: int = 1000,
     num_iter_to_reset_everything: Optional[int] = None,
