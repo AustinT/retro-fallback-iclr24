@@ -23,7 +23,7 @@ from .calculate_s_psi_rho import (
     rho_update,
     s_update,
 )
-from .leaf_distance import leaf_distance_update, reset_leaf_distance
+from .graph_distances import leaf_distance_update, reset_leaf_distance, reset_root_distance, root_distance_update
 from .stochastic_processes import BinaryBuyability, BuyabilityModel, FeasibilityModel
 
 logger = logging.getLogger(__name__)
@@ -340,8 +340,9 @@ class RetroFallbackSearch(
                 if key not in node.data:
                     node.data[key] = np.zeros(self.feasibility_model.num_samples)
             node.data.setdefault("leaf_distance", math.inf)
+            node.data.setdefault("root_distance", math.inf)
 
-        # Step 1) update "leaf_distance" (will be used to update s, psi in a good order)
+        # Step 1a) update "leaf_distance" (will be used to update s, psi in a good order)
         # Add optional reset to infinity (in case a cycle is formed)
         num_iter_to_reset_everything = 10 * len(graph)  # a large number which depends on the graph size
         leaf_distance_update_results = message_passing_with_resets(
@@ -357,6 +358,21 @@ class RetroFallbackSearch(
         )
         _log_update_result("leaf distance", leaf_distance_update_results, None)
         nodes_to_update.update(leaf_distance_update_results.nodes_updated)
+
+        # Step 1b) update "root_distance" (will be used to update rho in a good order)
+        root_distance_update_results = message_passing_with_resets(
+            nodes=nodes_to_update,
+            graph=graph,
+            update_fn=root_distance_update,
+            update_predecessors=False,
+            update_successors=True,
+            reset_function=reset_root_distance,
+            num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
+            reset_visit_threshold=self.reset_visit_threshold,
+            num_iter_to_reset_everything=num_iter_to_reset_everything,
+        )
+        _log_update_result("root distance", root_distance_update_results, None)
+        nodes_to_update.update(root_distance_update_results.nodes_updated)
 
         # Step 2) update "retro_fallback_s". Since it is non-decreasing we don't bother provided a reset function.
         s_update_result = message_passing_with_resets(
@@ -402,7 +418,7 @@ class RetroFallbackSearch(
             node_value_tracker=rho_tracker,
             num_visits_to_trigger_reset=self.num_visits_to_trigger_reset,
             reset_visit_threshold=self.reset_visit_threshold,
-            priority_fn=lambda node: node.depth,
+            priority_fn=lambda node: node.data["root_distance"],
             num_iter_to_reset_everything=num_iter_to_reset_everything,
         )
         _log_update_result("Rho", rho_update_result, rho_tracker)
