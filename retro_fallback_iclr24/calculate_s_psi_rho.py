@@ -164,6 +164,7 @@ class MessagePassingResult:
     nodes_updated: set[ANDOR_NODE]
     n_iter: int
     n_reset: int
+    n_update: int
     node_starting_values: dict[ANDOR_NODE, Any]
 
 
@@ -228,6 +229,7 @@ def message_passing_with_resets(
 
     # Visit nodes
     n_iter = 0
+    n_update = 0
     n_reset = 0
     reset_every_node = False  # will only do this once
     while len(update_queue) > 0:
@@ -240,6 +242,7 @@ def message_passing_with_resets(
 
         # Perform the update and add neighbours to the queue if value changes
         if update_fn(node, graph):
+            n_update += 1
             node_to_num_update_without_reset[node] += 1
             for n in sorted(get_neighbours_to_add(node), key=queue_entry_priority_fn):
                 add_to_priority_queue_if_priority_changed(update_queue, n, update_priority_fn(n))
@@ -254,7 +257,7 @@ def message_passing_with_resets(
                 # Reset type 1: reset all nodes in the graph
                 logger.warning(
                     "Too many iterations passed. "
-                    f"n_iter={n_iter}, n_reset={n_reset}. "
+                    f"n_iter={n_iter}, n_update={n_update}, n_reset={n_reset}. "
                     "Will now reset every node in the graph."
                 )
                 reset_every_node = True
@@ -274,7 +277,7 @@ def message_passing_with_resets(
                 # No resetting
                 nodes_to_reset = set()
 
-            # Second, do the resetting
+            # Second, do the resetting for all nodes at once (to avoid multiple resets of the same node)
             if nodes_to_reset:
                 n_reset += 1
 
@@ -287,6 +290,7 @@ def message_passing_with_resets(
 
                     # Second, do the reset
                     reset_function(reset_node, graph)
+                    n_update += 1  # resetting also counts as an update
                     node_to_num_update_without_reset[reset_node] = 0
 
                     # Third, mark node (and neighbours) for addition to queue
@@ -300,7 +304,13 @@ def message_passing_with_resets(
                     add_to_priority_queue_if_priority_changed(update_queue, n, update_priority_fn(n))
                     del n
 
-    return MessagePassingResult(set(node_to_num_update_without_reset.keys()), n_iter, n_reset, node_starting_values)
+    return MessagePassingResult(
+        set(node_to_num_update_without_reset.keys()),
+        n_iter=n_iter,
+        n_reset=n_reset,
+        n_update=n_update,
+        node_starting_values=node_starting_values,
+    )
 
 
 def reset_psi(node: ANDOR_NODE, graph: AndOrGraph) -> None:

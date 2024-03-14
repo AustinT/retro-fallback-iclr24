@@ -308,7 +308,8 @@ class RetroFallbackSearch(
                 self.stepwise_log_level,
                 f"{update_name} updates: {len(result.nodes_updated)} / {len(graph)} nodes updated "
                 f"in {result.n_iter} iterations "
-                f"with {result.n_reset} resets. "
+                f"with {result.n_update} total updates. "
+                f"and {result.n_reset} resets. "
                 f"{tracking_str}",
             )
 
