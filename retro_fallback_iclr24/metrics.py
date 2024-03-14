@@ -8,9 +8,9 @@ from typing import Collection, Iterator, Optional
 import numpy as np
 from syntheseus.search.analysis.route_extraction import _iter_top_routes
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
-from syntheseus.search.graph.message_passing import run_message_passing
 
-from retro_fallback_iclr24.calculate_s_psi_rho import s_update
+from retro_fallback_iclr24.calculate_s_psi_rho import message_passing_with_resets, s_update
+from retro_fallback_iclr24.graph_distances import leaf_distance_update, reset_leaf_distance
 from retro_fallback_iclr24.stochastic_processes import BuyabilityModel, FeasibilityModel
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,18 @@ def estimate_successful_synthesis_probability_over_time(
     are not sampled, because they will not affect the success outcomes of the root node.
     This procedure saves time in large graphs where many nodes are unsolved.
     """
+
+    # Compute "leaf distance" for each node in order to update s in an efficient order
+    for node in graph.nodes():
+        reset_leaf_distance(node, graph)
+        del node
+    _ = message_passing_with_resets(
+        nodes=graph.nodes(),
+        graph=graph,
+        update_fn=leaf_distance_update,
+        update_predecessors=True,
+        update_successors=False,
+    )
 
     output = []
 
@@ -59,12 +71,13 @@ def estimate_successful_synthesis_probability_over_time(
             node.data["retro_fallback_f"] = np.ones(1) * float(rxn_to_marginal[node.reaction] > 0)
         else:
             raise TypeError(f"Unexpected node type {type(node)}")
-    run_message_passing(
+    _ = message_passing_with_resets(
+        nodes=graph.nodes(),
         graph=graph,
-        nodes=sorted(graph.nodes(), key=lambda n: n.depth, reverse=True),
-        update_fns=[s_update],
+        update_fn=s_update,
         update_predecessors=True,
         update_successors=False,
+        queue_entry_priority_fn=lambda node: node.data["leaf_distance"],
     )
     mols_to_sample = {
         node.mol for node in graph.nodes() if isinstance(node, OrNode) and node.data["retro_fallback_s"].mean() > 0
@@ -117,12 +130,13 @@ def estimate_successful_synthesis_probability_over_time(
         logger.debug(f"Assigned samples in {t_i2-t_i:.2f} s.")
 
         # Run message passing from retro-fallback
-        run_message_passing(
+        _ = message_passing_with_resets(
+            nodes=graph.nodes(),
             graph=graph,
-            nodes=sorted(graph.nodes(), key=lambda n: n.depth, reverse=True),
-            update_fns=[s_update],
+            update_fn=s_update,
             update_predecessors=True,
             update_successors=False,
+            queue_entry_priority_fn=lambda node: node.data["leaf_distance"],
         )
         t_i3 = time.monotonic()
         logger.debug(f"Calculated success outcomes in {t_i3-t_i2:.2f} s.")
