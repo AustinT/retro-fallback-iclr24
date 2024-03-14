@@ -4,6 +4,7 @@ import logging
 import sys
 
 from retro_fallback_iclr24.iclr24_experiments import analyze_results, run_search
+from retro_fallback_iclr24.iclr24_experiments.latent_gp_feasibility import gp_feas_logger
 from retro_fallback_iclr24.metrics import logger as metrics_logger
 from retro_fallback_iclr24.retro_fallback import logger as rfb_logger
 
@@ -20,6 +21,7 @@ if __name__ == "__main__":
     analyze_results.logger.setLevel(logging.DEBUG)  # show time of each step of analysis
     run_search.logger.setLevel(logging.DEBUG)  # show info about which molecules are being run
     metrics_logger.setLevel(logging.DEBUG)  # show info about SSP calculation
+    gp_feas_logger.setLevel(logging.DEBUG)  # these steps can take a long time, so show progress
 
     # Run search and analyze results
     run_search.run_search_and_analyze_results()
