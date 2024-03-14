@@ -81,7 +81,7 @@ class AlgorithmParams:
 STANDARD_HEURISTICS = ["optimistic", "sascore"]
 
 algorithms = [
-    AlgorithmParams(name="retro-fallback", heuristics_to_test=["sascore"], num_samples=256),
+    AlgorithmParams(name="retro-fallback", heuristics_to_test=STANDARD_HEURISTICS, num_samples=256),
     AlgorithmParams(name="retro-star", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
     AlgorithmParams(name="mcts", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
     AlgorithmParams(name="breadth-first", heuristics_to_test=["NONE"]),
