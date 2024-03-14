@@ -37,8 +37,8 @@ datasets = [
     DatasetExperimentParams(
         name="retrostar190",
         smiles_file=f"{SMILES_FILE_PREFIX}/retrostar190/retrostar190.smiles",
-        num_replications=5,
-        search_length=501,
+        num_replications=3,
+        search_length=201,
         feasibility_models=ALL_FEASIBILITY_MODELS,
         max_idx=190,
         batch_size=10,
@@ -47,10 +47,10 @@ datasets = [
     DatasetExperimentParams(
         name="guacamol",
         smiles_file=f"{SMILES_FILE_PREFIX}/guacamol/test-all.smiles",
-        num_replications=2,
-        search_length=201,
+        num_replications=1,
+        search_length=101,
         feasibility_models=ALL_FEASIBILITY_MODELS,
-        max_idx=500,
+        max_idx=1000,
         batch_size=25,
         inventory="eMolecules",
     ),
@@ -81,7 +81,7 @@ class AlgorithmParams:
 STANDARD_HEURISTICS = ["optimistic", "sascore"]
 
 algorithms = [
-    AlgorithmParams(name="retro-fallback", heuristics_to_test=STANDARD_HEURISTICS, num_samples=1_000),
+    AlgorithmParams(name="retro-fallback", heuristics_to_test=["sascore"], num_samples=256),
     AlgorithmParams(name="retro-star", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
     AlgorithmParams(name="mcts", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
     AlgorithmParams(name="breadth-first", heuristics_to_test=["NONE"]),
