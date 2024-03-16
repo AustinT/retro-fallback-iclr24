@@ -21,6 +21,7 @@ class DatasetExperimentParams:
     batch_size: int
     inventory: str
     precursor_matching_file: Optional[str] = None
+    mcts_time_limit_s: Optional[float] = None
 
 
 ALL_FEASIBILITY_MODELS = [
@@ -43,6 +44,7 @@ datasets = [
         max_idx=190,
         batch_size=10,
         inventory="eMolecules",
+        mcts_time_limit_s=3e3,
     ),
     DatasetExperimentParams(
         name="guacamol",
@@ -53,6 +55,7 @@ datasets = [
         max_idx=1000,
         batch_size=25,
         inventory="eMolecules",
+        mcts_time_limit_s=3e3,
     ),
     DatasetExperimentParams(
         name="fusionretro",
@@ -64,6 +67,7 @@ datasets = [
         batch_size=100,
         inventory="fusion-retro",
         precursor_matching_file=f"{SMILES_FILE_PREFIX}/fusion_retro/test_dataset.json",
+        mcts_time_limit_s=1e3,
     ),
 ]
 
@@ -84,7 +88,7 @@ algorithms = [
     AlgorithmParams(name="retro-fallback", heuristics_to_test=STANDARD_HEURISTICS, num_samples=256),
     AlgorithmParams(name="retro-star", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
     AlgorithmParams(name="mcts", heuristics_to_test=STANDARD_HEURISTICS, tree=True),
-    AlgorithmParams(name="breadth-first", heuristics_to_test=["NONE"]),
+    AlgorithmParams(name="breadth-first", heuristics_to_test=["NONE"], tree=True),
 ]
 
 
@@ -141,6 +145,10 @@ if __name__ == "__main__":
                                 f"--andor_graph_analysis "
                                 f"--output_dir={str(curr_output_dir)} "
                             )
+
+                            # Optionally overwrite mcts_time_limit_s
+                            if alg.name == "mcts" and dataset.mcts_time_limit_s:
+                                command += f"--mcts_time_limit_s={dataset.mcts_time_limit_s} "
 
                             # Optionally overwrite num_samples
                             if alg.num_samples:
