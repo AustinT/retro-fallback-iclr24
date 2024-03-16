@@ -25,6 +25,7 @@ from retro_fallback_iclr24.iclr24_experiments.inventories import FusionRetroInve
 from retro_fallback_iclr24.iclr24_experiments.latent_gp_feasibility import (
     Constant_Mean_Latent_GP_Feasibility,
     Rank_Mean_Latent_GP_Feasibility,
+    gp_feas_logger,
 )
 from retro_fallback_iclr24.iclr24_experiments.mcts_stuff import (
     MCTS_Marginal_Feasibility_Policy,
@@ -275,6 +276,9 @@ def run_search_and_analyze_results():
             **common_alg_kwargs,
         )
         alg.init_mcts_value = 1.0  # optimistic start so that all nodes are visited
+
+        # Turn this down (otherwise it creates a lot of useless messages)
+        gp_feas_logger.setLevel(logging.INFO)
     elif args.algorithm == "breadth-first":
         alg = AndOr_BreadthFirstSearch(
             unique_nodes=True,
