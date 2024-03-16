@@ -126,6 +126,12 @@ def get_parser():
         help="Run algorithm on a tree instead of a graph.",
     )
     parser.add_argument(
+        "--mcts_time_limit_s",
+        type=float,
+        default=1e4,
+        help="Time limit for MCTS.",
+    )
+    parser.add_argument(
         "--precursor_matching_file",
         type=str,
         default=None,
@@ -266,11 +272,11 @@ def run_search_and_analyze_results():
             reward_function=MCTS_SuccessReward(feasibility_model, buyability_model),
             policy=MCTS_Marginal_Feasibility_Policy(feasibility_model),
             limit_iterations=high_integer,
-            time_limit_s=10_000,  # super high limit, should not be reached
+            time_limit_s=args.mcts_time_limit_s,
             max_expansion_depth=30,
             prevent_repeat_mol_in_trees=True,
             unique_nodes=False,
-            bound_constant=1,
+            bound_constant=0.1,
             bound_function=pucb_bound,
             min_num_visit_to_expand=10,  # gather a lot of information before expanding
             **common_alg_kwargs,
