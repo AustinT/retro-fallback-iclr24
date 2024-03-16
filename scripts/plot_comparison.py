@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--results_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--save_fmt", type=str, default="pdf")
+    parser.add_argument("--individual_smiles", action="store_true")
     args = parser.parse_args()
 
     # Update matplotlib rc settings to match ICLR 2024 styles
@@ -51,6 +52,7 @@ if __name__ == "__main__":
 
     # Create results dict
     results_dict: dict[ExperimentParams, list[dict[str, Any]]] = dict()
+    all_smiles: list[str] = []
     for result in sorted(Path(args.results_dir).rglob("*.json")):  # ensures SMILES are in order
         params = ExperimentParams(
             heuristic=result.parent.parent.name,
@@ -59,11 +61,17 @@ if __name__ == "__main__":
         )
         results_dict.setdefault(params, list())
         with open(result, "r") as f:
-            results_dict[params].append(json.load(f))
+            res = json.load(f)
+            results_dict[params].append(res)
+            all_smiles.append(res["smiles"])
+
+    # Make list of SMILES encountered unique
+    all_smiles = list(dict.fromkeys(all_smiles))
 
     # Print quick results summary
     for k, v in results_dict.items():
         print(f"{k}: {len(v)} results")
+    print("Total number of unique molecules:", len(all_smiles))
 
     # In general, one plot for each type of heuristic
     all_feas_models = sorted({params.feas_model for params in results_dict})
@@ -234,3 +242,59 @@ if __name__ == "__main__":
         # Save plot
         plt.savefig(Path(args.output_dir) / f"most_feasible_{heuristic_group[0]}.{args.save_fmt}")
         plt.close(fig=fig)
+
+        # Plot 5) (optionally) individual SMILES
+        # ==================================================
+        if args.individual_smiles:
+            for smiles_idx, curr_smiles in enumerate(all_smiles):
+
+                fig, axes = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True)
+                for i, (ax, feas_model) in enumerate(zip(axes.flatten(), all_feas_models)):
+                    plt.sca(ax)
+                    for res_type, res in sorted(results_dict.items(), key=lambda t: alg_sort(t[0].alg)):
+
+                        # Only plot for this particular feasibility model
+                        # and this particular heuristic
+                        if (
+                            res_type.feas_model != feas_model
+                            or res_type.heuristic not in heuristic_group
+                            or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
+                        ):
+                            continue
+
+                        ssp_arr = np.asarray([r["success_probabilities"] for r in res if r["smiles"] == curr_smiles])
+                        median_ssp = np.median(ssp_arr, axis=0)
+                        plt.errorbar(
+                            x=np.asarray(res[0]["analysis_times"]),
+                            y=median_ssp,
+                            yerr=np.stack(
+                                [
+                                    median_ssp - np.min(ssp_arr, axis=0),
+                                    np.max(ssp_arr, axis=0) - median_ssp,
+                                ]
+                            ),
+                            fmt=".-",
+                            capsize=3,
+                            label=f"{res_type.alg}",
+                        )
+
+                        del res_type, res, ssp_arr, median_ssp
+
+                    if i == 0:
+                        plt.ylabel("min/median/max SSP")
+
+                    plt.title(feas_to_title(feas_model))
+
+                # Big legend below the plot
+                fig.legend(
+                    *axes[0].get_legend_handles_labels(),
+                    bbox_to_anchor=(0.5, -0.0),
+                    ncol=4,
+                    loc="upper center",
+                    title=f"SMILES: {curr_smiles}",
+                    title_fontsize="x-small",
+                )
+
+                # Save plot
+                plt.savefig(Path(args.output_dir) / f"mol{smiles_idx:04d}_SSP_{heuristic_group[0]}.{args.save_fmt}")
+                plt.close(fig=fig)
