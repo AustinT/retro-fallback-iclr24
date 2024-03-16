@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--save_fmt", type=str, default="pdf")
     args = parser.parse_args()
 
     # Update matplotlib rc settings to match ICLR 2024 styles
@@ -113,7 +114,7 @@ if __name__ == "__main__":
         fig.legend(*axes[0].get_legend_handles_labels(), bbox_to_anchor=(0.5, -0.0), ncol=4, loc="upper center")
 
         # Save plot
-        plt.savefig(Path(args.output_dir) / f"ssp_{heuristic_group[0]}.png")  # TODO: change to pdf
+        plt.savefig(Path(args.output_dir) / f"ssp_{heuristic_group[0]}.{args.save_fmt}")
         plt.close(fig=fig)
 
         # Plot 2) fraction solved
@@ -153,7 +154,7 @@ if __name__ == "__main__":
         fig.legend(*axes[0].get_legend_handles_labels(), bbox_to_anchor=(0.5, -0.0), ncol=4, loc="upper center")
 
         # Save plot
-        plt.savefig(Path(args.output_dir) / f"frac_solved_{heuristic_group[0]}.png")  # TODO: change to pdf
+        plt.savefig(Path(args.output_dir) / f"frac_solved_{heuristic_group[0]}.{args.save_fmt}")
         plt.close(fig=fig)
 
         # Plot 3) shortest synthesis plan length
@@ -194,7 +195,7 @@ if __name__ == "__main__":
             plt.title(feas_to_title(feas_model))
 
         # Save plot
-        plt.savefig(Path(args.output_dir) / f"shortest_{heuristic_group[0]}.png")  # TODO: change to pdf
+        plt.savefig(Path(args.output_dir) / f"shortest_{heuristic_group[0]}.{args.save_fmt}")
         plt.close(fig=fig)
 
         # Plot 4) synthesis plan with highest success probability
@@ -231,5 +232,5 @@ if __name__ == "__main__":
             plt.title(feas_to_title(feas_model))
 
         # Save plot
-        plt.savefig(Path(args.output_dir) / f"most_feasible_{heuristic_group[0]}.png")  # TODO: change to pdf
+        plt.savefig(Path(args.output_dir) / f"most_feasible_{heuristic_group[0]}.{args.save_fmt}")
         plt.close(fig=fig)
