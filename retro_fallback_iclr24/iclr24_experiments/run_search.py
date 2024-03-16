@@ -140,7 +140,7 @@ def get_parser():
     parser.add_argument(
         "--andor_graph_analysis",
         action="store_true",
-        help="For OR graphs, convert to an AND/OR graph when performing analysis.",
+        help="For OR graphs or algorithms using trees, convert to an AND/OR graph when performing analysis.",
     )
     parser.add_argument(
         "--skip_most_feasible_route",
@@ -316,11 +316,13 @@ def run_search_and_analyze_results():
         buyability_model.num_samples = args.num_samples
 
         # Potential convert to AND/OR graph for analysis
-        if isinstance(output_graph, MolSetGraph) and args.andor_graph_analysis:
-            output_graph = get_unique_node_andor_graph(output_graph)
+        if args.andor_graph_analysis and (isinstance(output_graph, MolSetGraph) or args.tree):
+            graph_to_analyze = get_unique_node_andor_graph(output_graph)
             logger.debug(
                 f"Converted OR graph to AND/OR graph for analysis. Resulting graph has {len(output_graph)} nodes."
             )
+        else:
+            graph_to_analyze = output_graph
 
         # Analyze output graph
         if isinstance(output_graph, MolSetGraph):
@@ -329,7 +331,7 @@ def run_search_and_analyze_results():
             )
         else:
             analysis_results = analyze_output_graph(
-                output_graph,
+                graph_to_analyze,
                 feasibility_model,
                 buyability_model,
                 analysis_times,
