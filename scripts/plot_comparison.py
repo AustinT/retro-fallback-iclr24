@@ -195,7 +195,7 @@ if __name__ == "__main__":
                     continue
 
                 route_lengths.append([min(MAX_ROUTE_LEN, d["shortest_route_over_time"][-1]) for d in res])
-                alg_names.append(res_type.alg)
+                alg_names.append(alg_name_to_title(res_type.alg))
 
                 del res_type, res
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
                 route_lengths,
                 labels=alg_names,
             )
-            ax.tick_params(axis="x", labelrotation=60)
+            ax.tick_params(axis="x", labelrotation=45)
             del route_lengths, alg_names
 
             plt.title(feas_to_title(feas_model))
@@ -244,12 +244,12 @@ if __name__ == "__main__":
 
                 MAX_ROUTE_LEN = 20
                 route_succ.append([d["most_feasible_route_over_time"][-1] for d in res])
-                alg_names.append(res_type.alg)
+                alg_names.append(alg_name_to_title(res_type.alg))
 
                 del res_type, res
 
             plt.boxplot(route_succ, labels=alg_names)
-            ax.tick_params(axis="x", labelrotation=60)
+            ax.tick_params(axis="x", labelrotation=45)
             del route_succ, alg_names
 
             if i == 0:
