@@ -89,11 +89,7 @@ if __name__ == "__main__":
 
                 # Only plot for this particular feasibility model
                 # and this particular heuristic
-                if (
-                    res_type.feas_model != feas_model
-                    or res_type.heuristic not in heuristic_group
-                    or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
-                ):
+                if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                     continue
 
                 # Concatenate results
@@ -134,11 +130,7 @@ if __name__ == "__main__":
 
                 # Only plot for this particular feasibility model
                 # and this particular heuristic
-                if (
-                    res_type.feas_model != feas_model
-                    or res_type.heuristic not in heuristic_group
-                    or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
-                ):
+                if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                     continue
 
                 # Fraction solved
@@ -176,11 +168,7 @@ if __name__ == "__main__":
 
                 # Only plot for this particular feasibility model
                 # and this particular heuristic
-                if (
-                    res_type.feas_model != feas_model
-                    or res_type.heuristic not in heuristic_group
-                    or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
-                ):
+                if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                     continue
 
                 MAX_ROUTE_LEN = 20
@@ -217,11 +205,7 @@ if __name__ == "__main__":
 
                 # Only plot for this particular feasibility model
                 # and this particular heuristic
-                if (
-                    res_type.feas_model != feas_model
-                    or res_type.heuristic not in heuristic_group
-                    or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
-                ):
+                if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                     continue
 
                 MAX_ROUTE_LEN = 20
@@ -255,11 +239,7 @@ if __name__ == "__main__":
 
                         # Only plot for this particular feasibility model
                         # and this particular heuristic
-                        if (
-                            res_type.feas_model != feas_model
-                            or res_type.heuristic not in heuristic_group
-                            or "mcts" in res_type.alg.lower()  # TODO: just skip MCTS for now, add in later
-                        ):
+                        if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                             continue
 
                         ssp_arr = np.asarray([r["success_probabilities"] for r in res if r["smiles"] == curr_smiles])
