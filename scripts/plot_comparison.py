@@ -49,6 +49,14 @@ if __name__ == "__main__":
     plt.rcParams.update(fontsizes.iclr2024())
     plt.rcParams.update(fonts.iclr2024())
     plt.rcParams.update(figsizes.iclr2024())
+    plt.rcParams.update(  # Use Times New Roman instead of Times
+        {
+            "font.serif": ["Times New Roman"],
+            "mathtext.rm": "Times New Roman",
+            "mathtext.it": "Times New Roman:italic",
+            "mathtext.bf": "Times New Roman:bold",
+        }
+    )
 
     # Create results dict
     results_dict: dict[ExperimentParams, list[dict[str, Any]]] = dict()
