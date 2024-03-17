@@ -276,7 +276,7 @@ def run_search_and_analyze_results():
             max_expansion_depth=30,
             prevent_repeat_mol_in_trees=True,
             unique_nodes=False,
-            bound_constant=0.1,
+            bound_constant=0.01,
             bound_function=pucb_bound,
             min_num_visit_to_expand=10,  # gather a lot of information before expanding
             **common_alg_kwargs,
@@ -325,15 +325,15 @@ def run_search_and_analyze_results():
         if args.andor_graph_analysis and (isinstance(output_graph, MolSetGraph) or args.tree):
             graph_to_analyze = get_unique_node_andor_graph(output_graph)
             logger.debug(
-                f"Converted OR graph to AND/OR graph for analysis. Resulting graph has {len(output_graph)} nodes."
+                f"Converted OR graph to AND/OR graph for analysis. Resulting graph has {len(graph_to_analyze)} nodes."
             )
         else:
             graph_to_analyze = output_graph
 
         # Analyze output graph
-        if isinstance(output_graph, MolSetGraph):
+        if isinstance(graph_to_analyze, MolSetGraph):
             analysis_results = analyze_output_graph_molset(
-                output_graph, feasibility_model, buyability_model, analysis_times
+                graph_to_analyze, feasibility_model, buyability_model, analysis_times
             )
         else:
             analysis_results = analyze_output_graph(
