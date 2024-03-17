@@ -35,6 +35,15 @@ def alg_sort(alg_name: str) -> int:
     return name_to_priority.get(alg_name, 4)
 
 
+def alg_name_to_title(alg_name: str) -> str:
+    if alg_name == "mcts":
+        return "MCTS"
+    elif alg_name == "retro-star":
+        return "retro*"
+    else:
+        return alg_name
+
+
 if __name__ == "__main__":
 
     # Parse arguments
@@ -109,7 +118,7 @@ if __name__ == "__main__":
                     yerr=np.std(ssp_arr, axis=0, ddof=1) / np.sqrt(ssp_arr.shape[0]),  # sample std
                     fmt=".-",
                     capsize=3,
-                    label=f"{res_type.alg}",
+                    label=alg_name_to_title(res_type.alg),
                 )
 
                 del res_type, res, ssp_arr
@@ -145,7 +154,10 @@ if __name__ == "__main__":
                 solved_arr = (np.asarray([r["success_probabilities"] for r in res]) > 0).astype(float)
 
                 plt.plot(
-                    np.asarray(res[0]["analysis_times"]), np.mean(solved_arr, axis=0), ".-", label=f"{res_type.alg}"
+                    np.asarray(res[0]["analysis_times"]),
+                    np.mean(solved_arr, axis=0),
+                    ".-",
+                    label=alg_name_to_title(res_type.alg),
                 )
 
                 del res_type, res, solved_arr
@@ -263,7 +275,7 @@ if __name__ == "__main__":
                             ),
                             fmt=".-",
                             capsize=3,
-                            label=f"{res_type.alg}",
+                            label=alg_name_to_title(res_type.alg),
                         )
 
                         del res_type, res, ssp_arr, median_ssp
@@ -286,3 +298,64 @@ if __name__ == "__main__":
                 # Save plot
                 plt.savefig(Path(args.output_dir) / f"mol{smiles_idx:04d}_SSP_{heuristic_group[0]}.{args.save_fmt}")
                 plt.close(fig=fig)
+
+        # Plot 6) scatter plots with runtime
+        # ==================================================
+        fig, axes = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True)
+        for i, (ax, feas_model) in enumerate(zip(axes.flatten(), all_feas_models)):
+            plt.sca(ax)
+            for res_type, res in sorted(results_dict.items(), key=lambda t: alg_sort(t[0].alg)):
+
+                # Only plot for this particular feasibility model
+                # and this particular heuristic
+                if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
+                    continue
+
+                # Only plot retro-fallback
+                if res_type.alg != "retro-fallback":
+                    continue
+
+                # Get all node / runtime pairs from the dataset
+                n_nodes = []
+                times = []
+                for d in res:
+                    for n, t in zip(d["num_nodes_over_time"], d["search_duration_over_time"]):
+                        if not np.isnan(t):
+                            times.append(t)
+                            n_nodes.append(n)
+                n_nodes = np.asarray(n_nodes)
+                times = np.asarray(times)
+
+                # Figure out line of best fit (but only for long runtimes)
+                LOG10_LINEAR_FIT_CUTOFF = 2.5
+                mask = n_nodes > (10**LOG10_LINEAR_FIT_CUTOFF)  # type: ignore
+                poly_best_fit = np.polynomial.polynomial.Polynomial.fit(
+                    np.log10(n_nodes[mask]), np.log10(times[mask]), deg=1
+                )
+                plot_logt = np.linspace(LOG10_LINEAR_FIT_CUTOFF, 4, 25)
+
+                # Plot the results
+                plt_idxs = np.random.choice(
+                    len(times), size=500, replace=False
+                )  # only plot a subset of the data (otherwise it's too crowded)
+                scatter = plt.loglog(n_nodes[plt_idxs], times[plt_idxs], ",")[0]
+                plt.loglog(
+                    10**plot_logt,
+                    10 ** poly_best_fit(plot_logt),
+                    "-",
+                    color=scatter.get_color(),
+                    label=f"p={poly_best_fit.convert().coef[-1]:.2f}",
+                )
+
+                del res_type, res, n_nodes, times
+
+            plt.legend()
+            plt.xlabel("Nodes in $\\mathcal{G}'$")
+            if i == 0:
+                plt.ylabel("Runtime (s)")
+
+            plt.title(feas_to_title(feas_model))
+
+        # Save plot
+        plt.savefig(Path(args.output_dir) / f"runtimes_{heuristic_group[0]}.{args.save_fmt}")
+        plt.close(fig=fig)
