@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -180,8 +181,10 @@ if __name__ == "__main__":
         # Plot 3) shortest synthesis plan length
         # ==================================================
         fig, axes = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True)
+        MAX_ROUTE_LEN = 20
         for i, (ax, feas_model) in enumerate(zip(axes.flatten(), all_feas_models)):
             plt.sca(ax)
+            plt.axhline(MAX_ROUTE_LEN, color="k", linestyle="--")  # horizontal line for no solution
             route_lengths = []
             alg_names = []
             for res_type, res in sorted(results_dict.items(), key=lambda t: alg_sort(t[0].alg)):
@@ -191,7 +194,6 @@ if __name__ == "__main__":
                 if res_type.feas_model != feas_model or res_type.heuristic not in heuristic_group:
                     continue
 
-                MAX_ROUTE_LEN = 20
                 route_lengths.append([min(MAX_ROUTE_LEN, d["shortest_route_over_time"][-1]) for d in res])
                 alg_names.append(res_type.alg)
 
@@ -205,10 +207,22 @@ if __name__ == "__main__":
             ax.tick_params(axis="x", labelrotation=60)
             del route_lengths, alg_names
 
+            plt.title(feas_to_title(feas_model))
             if i == 0:
                 plt.ylabel("Shortest plan")
 
-            plt.title(feas_to_title(feas_model))
+            # Make it clear that the top of the plot is "no solution"
+            yticks = ax.get_yticks()
+            new_labels = []
+            new_ticks = []
+            for yt_val in yticks:
+                new_ticks.append(yt_val)
+                if math.isclose(yt_val, MAX_ROUTE_LEN):
+                    new_labels.append("$\\mathdefault{\\infty}$")
+                    break
+                else:
+                    new_labels.append(str(int(yt_val)))
+            ax.set_yticks(new_ticks, labels=new_labels)
 
         # Save plot
         plt.savefig(Path(args.output_dir) / f"shortest_{heuristic_group[0]}.{args.save_fmt}")
