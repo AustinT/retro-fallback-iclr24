@@ -54,6 +54,7 @@ if __name__ == "__main__":
                             / f"trial_{trial+1}"
                             / f"num_samples_{num_samples}"
                         )
+                        curr_output_dir.mkdir(parents=True, exist_ok=True)
 
                         # Create command (except options for other algorithms are omitted)
                         command = (
@@ -70,6 +71,7 @@ if __name__ == "__main__":
                             f"--andor_graph_analysis "
                             f"--output_dir={str(curr_output_dir)} "
                             f"--num_samples_alg={num_samples} "
+                            "--rfb_early_termination_prob=1.1 "  # i.e. never terminate early
                         )
 
                         # Append a re-direct of stdout and std err to log file
