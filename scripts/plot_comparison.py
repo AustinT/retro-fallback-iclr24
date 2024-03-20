@@ -45,17 +45,8 @@ def alg_name_to_title(alg_name: str) -> str:
         return alg_name
 
 
-if __name__ == "__main__":
-
-    # Parse arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--results_dir", type=str, required=True)
-    parser.add_argument("--output_dir", type=str, required=True)
-    parser.add_argument("--save_fmt", type=str, default="pdf")
-    parser.add_argument("--individual_smiles", action="store_true")
-    args = parser.parse_args()
-
-    # Update matplotlib rc settings to match ICLR 2024 styles
+def set_iclr_rc_params() -> None:
+    """Update matplotlib rc settings to match ICLR 2024 styles"""
     plt.rcParams.update(fontsizes.iclr2024())
     plt.rcParams.update(fonts.iclr2024())
     plt.rcParams.update(figsizes.iclr2024())
@@ -67,6 +58,20 @@ if __name__ == "__main__":
             "mathtext.bf": "Times New Roman:bold",
         }
     )
+
+
+if __name__ == "__main__":
+
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--results_dir", type=str, required=True)
+    parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--save_fmt", type=str, default="pdf")
+    parser.add_argument("--individual_smiles", action="store_true")
+    args = parser.parse_args()
+
+    # Set matplotlib style
+    set_iclr_rc_params()
 
     # Create results dict
     results_dict: dict[ExperimentParams, list[dict[str, Any]]] = dict()
