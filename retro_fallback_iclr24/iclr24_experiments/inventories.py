@@ -12,6 +12,8 @@ from rdkit import Chem
 from syntheseus import Molecule
 from syntheseus.search.mol_inventory import BaseMolInventory
 
+from retro_fallback_iclr24.stochastic_processes.buyability import IndependentBuyabilityModel
+
 EMOLECULES_INVENTORY_CSV = Path(__file__).parent / "eMolecules" / "emolecules_inventory.csv"
 FUSION_RETRO_INVENTORY = Path(__file__).parent / "fusion_retro" / "zinc_stock_17_04_20.hdf5"
 FUSION_RETRO_INCHI_STR = "fusion_retro_inchi_key"
@@ -38,6 +40,24 @@ class eMoleculesInventory(BaseMolInventory):
         tier = self._smiles_to_tier.get(mol.smiles, None)
         if tier is not None:
             mol.metadata["emols_tier"] = tier
+
+
+class eMoleculesTieredBuyabilityModel(IndependentBuyabilityModel):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.tier_to_prob = {  # could manually overwrite if desired
+            0: 1.0,
+            1: 1.0,
+            2: 1.0,
+            3: 0.5,
+            4: 0.2,
+            5: 0.05,
+        }
+        self.default_prob = 0.0  # for tiers not in the dictionary
+
+    def marginal_probability(self, inputs: set[Molecule]) -> dict[Molecule, float]:
+        mol_to_tier = {mol: mol.metadata.get("emols_tier", -1) for mol in inputs}
+        return {mol: self.tier_to_prob.get(mol_to_tier[mol], self.default_prob) for mol in inputs}
 
 
 class FusionRetroInventory(BaseMolInventory):
