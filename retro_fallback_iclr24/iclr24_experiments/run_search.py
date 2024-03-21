@@ -21,7 +21,11 @@ from syntheseus_retro_star_benchmark import RetroStarReactionModel
 from tqdm import tqdm
 
 from retro_fallback_iclr24.iclr24_experiments.analyze_results import analyze_output_graph, analyze_output_graph_molset
-from retro_fallback_iclr24.iclr24_experiments.inventories import FusionRetroInventory, eMoleculesInventory
+from retro_fallback_iclr24.iclr24_experiments.inventories import (
+    FusionRetroInventory,
+    eMoleculesInventory,
+    eMoleculesTieredBuyabilityModel,
+)
 from retro_fallback_iclr24.iclr24_experiments.latent_gp_feasibility import (
     Constant_Mean_Latent_GP_Feasibility,
     Rank_Mean_Latent_GP_Feasibility,
@@ -95,7 +99,7 @@ def get_parser():
         "--inventory",
         type=str,
         default="eMolecules",
-        help="Which inventory to use.",
+        help="Which inventory/buyability model to use.",
     )
     parser.add_argument(
         "--num_samples",
@@ -209,13 +213,21 @@ def run_search_and_analyze_results():
         raise NotImplementedError(f"Invalid marginal_feasibility: {args.marginal_feasibility}")
 
     # Make inventory and buyability model
-    if args.inventory == "eMolecules":
+    inventory_tokens = args.inventory.split("-")  # e.g. "eMolecules-tiered"
+    if inventory_tokens[0] == "eMolecules":
         inventory = eMoleculesInventory(max_tier=2)
-    elif args.inventory == "fusion-retro":
+    elif inventory_tokens[0] == "fusion-retro":
         inventory = FusionRetroInventory()
     else:
         raise ValueError(f"Invalid inventory: {args.inventory}")
-    buyability_model = BinaryBuyability(num_samples=args.num_samples)
+    if len(inventory_tokens) == 1:  # default is binary buyability
+        buyability_model = BinaryBuyability(num_samples=args.num_samples)
+    elif inventory_tokens[1] == "stochastic":
+        buyability_model = eMoleculesTieredBuyabilityModel(num_samples=args.num_samples)
+        assert isinstance(inventory, eMoleculesInventory), "Need to use this with eMolecules inventory!"
+    else:
+        raise ValueError(f"Invalid inventory: {args.inventory}")
+    del inventory_tokens
 
     # Make the algorithm object
     high_integer = int(1e10)
