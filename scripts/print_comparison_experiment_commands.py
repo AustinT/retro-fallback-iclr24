@@ -69,6 +69,17 @@ datasets = [
         precursor_matching_file=f"{SMILES_FILE_PREFIX}/fusion_retro/test_dataset.json",
         mcts_time_limit_s=1e3,
     ),
+    DatasetExperimentParams(
+        name="retrostar190-stochastic-inv",
+        smiles_file=f"{SMILES_FILE_PREFIX}/retrostar190/retrostar190.smiles",
+        num_replications=3,
+        search_length=201,
+        feasibility_models=ALL_FEASIBILITY_MODELS,
+        max_idx=190,
+        batch_size=10,
+        inventory="eMolecules-stochastic",
+        mcts_time_limit_s=3e3,
+    ),
 ]
 
 
