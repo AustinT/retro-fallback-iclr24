@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     # Print quick results summary
     for k, v in results_dict.items():
-        print(f"{k}: {len(v)} results")
+        print(f"{len(v)} results: {k}")
     print("Total number of unique molecules:", len(all_smiles))
 
     # In general, one plot for each type of heuristic
