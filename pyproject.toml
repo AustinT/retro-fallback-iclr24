@@ -10,15 +10,27 @@ authors = [
 ]
 description = "Official implentation of retro-fallback for ICLR 2024"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE"}
 dependencies = [
-    "syntheseus",
+    "syntheseus>=0.4.0",
     "syntheseus-retro-star-benchmark",
+    "tueplots",
+    "numpy",
+    "rdkit",
+    "pandas",
+    "scipy",
+    "tqdm",
 ]
 
 [project.urls]
 Repository = "https://github.com/AustinT/retro-fallback-iclr24"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["retro_fallback_iclr24*"]
+exclude = ["plots", "misc"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "retro_fallback_iclr24" = ["py.typed"]
