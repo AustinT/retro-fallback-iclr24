@@ -65,7 +65,7 @@ def main():
     # Output inventory
     inventory_df = pd.DataFrame(inventory)
     inventory_df = inventory_df.sort_values(by=["tier", "smiles"])  # sort by tier (smiles is tiebreaker)
-    inventory_df.to_csv("emolecules_inventory.csv", index=False)
+    inventory_df.to_csv("emolecules_inventory.csv.gz", index=False, compression="gzip")
 
     # Output stats
     stats = dict(

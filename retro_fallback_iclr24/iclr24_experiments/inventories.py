@@ -14,7 +14,7 @@ from syntheseus.search.mol_inventory import BaseMolInventory
 
 from retro_fallback_iclr24.stochastic_processes.buyability import IndependentBuyabilityModel
 
-EMOLECULES_INVENTORY_CSV = Path(__file__).parent / "eMolecules" / "emolecules_inventory.csv"
+EMOLECULES_INVENTORY_CSV = Path(__file__).parent / "eMolecules" / "emolecules_inventory.csv.gz"
 FUSION_RETRO_INVENTORY = Path(__file__).parent / "fusion_retro" / "zinc_stock_17_04_20.hdf5"
 FUSION_RETRO_INCHI_STR = "fusion_retro_inchi_key"
 
@@ -25,7 +25,7 @@ class eMoleculesInventory(BaseMolInventory):
         self.max_tier = max_tier
 
         # Read data frame
-        df = pd.read_csv(eMolecules_file)
+        df = pd.read_csv(eMolecules_file, compression="gzip")
         smiles_list = df.smiles.to_list()
         tier_list = df.tier.to_list()
 
