@@ -32,6 +32,8 @@ def s_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
 
     For AND nodes, this is just the product of the success of children and reaction feasibility.
 
+    This is defined in equations 4-5 of our ICLR paper.
+
     NOTE: updates depend only on children, so can avoid updating children in update prop.
     """
 
@@ -64,7 +66,7 @@ def psi_update(node: ANDOR_NODE, graph: AndOrGraph, max_feasibility_eps: float =
     `psi` indicates a potential success probablility achievable by each node
     if one synthesis plan under it is expanded.
 
-    TODO: mention equation defining it in the paper
+    This is defined in equations 12-13 of our ICLR paper.
 
     psi values for AND nodes are capped at `1-max_feasibility_eps` to aid solving.
 
@@ -119,7 +121,7 @@ def rho_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
     `rho` is essentially the estimated success probability of the single best synthesis
     plan which any node lies on.
 
-    TODO: mention equation defining it in the paper
+    This is defined in equations 14-15 of our ICLR paper.
 
     NOTE: updates depend only on parents.
     """
